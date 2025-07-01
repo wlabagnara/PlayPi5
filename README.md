@@ -5,6 +5,6 @@
 
 ## Initial focus is for AI projects on the Pi 5
 - Machine Learning and Deep Learning
-- Coral Edge TPU for AI acceleration
+- Coral Edge TPU for AI acceleration (Installed on Pi via USB 3.0)
 - Hailo AI Module (Installed on Pi via M.2 HAT)  
 
