@@ -1,0 +1,161 @@
+
+I prefer using the PyEnv method of 'downgrading' to the python version required to use the Coral TPU.
+ See the 'CoralUsbPythonEnv.txt' file to see how this was able to work successfully.
+ However, keeping these notes for future reference.
+
+********************
+
+# ** General docker install:
+
+ref: https://www.youtube.com/watch?v=CTwo_s7cZPY
+
+# start with best practice update:
+  sudo apt update 
+  sudo apt upgrade -y
+
+# make sure curl is installed:
+  sudo apt install curl -y
+
+# install docker:
+  curl -sSL https://get.docker.com | sh   (note should check the 'get.docker' script at https://get.docker.com/)
+
+# convenience to avoid having to use 'sudo' continuously
+  sudo usermod -aG docker #USER
+
+# restart pi:
+  sudo reboot
+
+# check that docker is in user group:
+  groups  (should see 'docker' listed in output)
+
+# test docker installed properly:
+  docker run hello-world  (should see "Hello from Docker!")
+
+
+********************
+
+
+# ** Coral USB install on Pi 5:
+
+ref: https://coral.ai/docs/accelerator/get-started/
+	 https://coral.ai/models/image-classification/ (Example model: MobileNet V2, 900+ birds, 224x224x3, TF version 1.0, etc)
+	 https://coral.ai/models/all/ (All models to try more examples)
+
+ref: https://www.youtube.com/watch?v=6O0M7MaRjTs 
+- Uses docker to avoid 'downgrading' Pi 5 to use older python version 3.9 required by Coral USB!
+- Debian 10 with python 3.9 will be container with Coral USB installed
+
+ref: https://www.diyengineers.com/2024/05/18/setup-coral-tpu-usb-accelerator-on-raspberry-pi-5/ (copy, paste commands)
+
+# install docker:
+
+  sudo apt-get update
+  
+  sudo apt-get install ca-certificates curl
+  sudo install -m 0755 -d /etc/apt/keyrings
+  sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+  sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+  echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+    $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+    sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+  sudo apt-get update
+
+  sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+  sudo docker run hello-world (should see "Hello from Docker!")
+
+# install the Edge TPU runtime for Coral USB:
+# add the Debian package repository:
+
+  echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
+ 
+  curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+ 
+  sudo apt-get update
+
+# install the Edge TPU runtime:
+
+  sudo apt-get install libedgetpu1-std
+
+# reboot 
+
+  sudo reboot
+
+  lsusb  (to see "18d1:9302 Google Inc." enumerated or not!)
+
+# create and build docker file:
+
+# create folder '~/Docker/customimgs/Deb10'
+
+# create file 'Dockerfile' under this folder
+
+# add following contents to this file:
+
+  FROM debian:10
+	
+  WORKDIR /home
+  ENV HOME /home
+  RUN cd ~
+  RUN apt-get update
+  RUN apt-get install -y git nano python3-pip python-dev pkg-config wget usbutils curl
+	
+  RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" \
+  | tee /etc/apt/sources.list.d/coral-edgetpu.list
+  RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+  RUN apt-get update
+  RUN apt-get install -y edgetpu-examples
+  RUN apt-get install -y udev
+  RUN apt-get install -y sudo
+  RUN echo 'SUBSYSTEM=="usb", ATTRS{idVendor}=="18d1", ATTR{idProduct}=="9302", MODE="0666"' > /etc/udev/rules.d/CORALUSB
+
+# build docker:
+
+  cd Docker/customimgs/Deb10
+  sudo docker build -t "coral" .
+
+# run the example in docker:
+
+  sudo docker run -it --device /dev/bus/usb:/dev/bus/usb coral /bin/bash
+
+# from inside the docker container:
+
+  python3 /usr/share/edgetpu/examples/classify_image.py --model
+  /usr/share/edgetpu/examples/models/mobilenet_v2_1.0_224_inat_bird_quant_edgetpu.tflite --label
+  /usr/share/edgetpu/examples/models/inat_bird_labels.txt --image
+  /usr/share/edgetpu/examples/images/bird.bmp
+  
+# output will most likely be an error such as this: 'RuntimeError: Error in device opening..", if so:
+
+	Ctrl-D to exit docker
+	Rerun 'lsusb' to see if USB enumerates properly, if so... rerun commands...
+
+# now, the runtime error should go be gone and these examples should run...
+
+	# go back into docker container:
+	sudo docker run -it --device /dev/bus/usb:/dev/bus/usb coral /bin/bash 
+
+	# run first example (bird):
+	python3 /usr/share/edgetpu/examples/classify_image.py --model 
+	/usr/share/edgetpu/examples/models/mobilenet_v2_1.0_224_inat_bird_quant_edgetpu.tflite --label 
+	/usr/share/edgetpu/examples/models/inat_bird_labels.txt --image
+	/usr/share/edgetpu/examples/images/bird.bmp
+
+	Now you should see the expected example output!
+	
+	# run another example (parrot):
+	python3 /usr/share/edgetpu/examples/classify_image.py --model 
+	/usr/share/edgetpu/examples/models/mobilenet_v2_1.0_224_inat_bird_quant_edgetpu.tflite --label 
+	/usr/share/edgetpu/examples/models/inat_bird_labels.txt --image
+	/usr/share/edgetpu/examples/images/parrot.jpg
+
+	Now you should see the expected example output for this example!
+	
+	# exit docker container
+
+	Ctrl-D
+	
+********************
+

@@ -1,0 +1,173 @@
+
+*************************************************************
+# * Coral USB install on Pi 5 using reqired python environment
+*************************************************************
+
+refs Coral AI Website: (The AI Model Stuff!) 
+	https://coral.ai/docs/accelerator/get-started/
+	https://coral.ai/models/image-classification/ (Example model: MobileNet V2, 900+ birds, 224x224x3, TF version 1.0, etc)
+	https://coral.ai/models/all/ (All models to try more examples)
+    https://coral.ai/
+    https://coral.ai/models
+
+ref: https://www.youtube.com/watch?v=TRxR74qA-5E 
+- Uses python environment to avoid 'downgrading' Pi 5 to use older python version 3.9 required by Coral USB!
+- Debian 10 with python 3.9 installed and then use a venv with Coral USB installed to run models
+
+# Install the Edge TPU runtime for Coral USB:
+# add the Debian package repository:
+
+  echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
+ 
+  curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+ 
+  sudo apt-get update
+
+# Install the Edge TPU runtime:
+
+  sudo apt-get install libedgetpu1-std
+
+# Install required python version:
+
+  [ Pyenv method (recommended)... ]
+
+  # Install pyenv...
+   
+  steps from ref: https://www.samwestby.com/tutorials/rpi-pyenv.html (uses 'curl' method for install which seems to work nicely!)
+      note also, my 'PythonEnv.txt' reference file and https://github.com/pyenv/pyenv?tab=readme-ov-file#installation!
+	  
+    curl https://pyenv.run | bash
+  
+    sudo nano ~/.bashrc , and add lines at bottom:
+	
+      export PATH="$HOME/.pyenv/bin:$PATH"
+      eval "$(pyenv init --path)"
+      eval "$(pyenv virtualenv-init -)"  
+  
+	CTRL+S, CTRL+X to save and exit
+	
+	exec $SHELL (to restart the terminal)
+
+	# pyenv 'eventually' is going to need all these packages, so just install them now...
+    sudo apt-get install --yes libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libgdbm-dev lzma lzma-dev tcl-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev wget curl make build-essential openssl    	
+  
+    (if 'no longer required', sudo apt autoremove to remove them?)
+	
+	pyenv update
+	pyenv install --list
+
+	pyenv install 3.x.y   (to install your desired version)
+		
+	
+*******
+
+	
+# Follow steps 'Step 1: Install the Edge TPU runtime' on Coral USB accelerator site:
+
+	https://coral.ai/docs/accelerator/get-started/#1-install-the-edge-tpu-runtime
+	
+	echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
+	curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+	sudo apt-get update
+	
+	sudo apt-get install libedgetpu1-std
+		
+# Create a project folder:
+
+   ~/<home>/projects/Coral
+   cd projects/Coral
+
+# Make your pyenv here ('under' this folder):
+
+  pyenv local 3.9.16
+  
+# Note: Do not need extra step of creating a 'venv'... pyenv is good enough... pyenv takes care of it!)
+
+  ~/projects/Coral/pycoral $ python -V
+     Python 3.9.16
+	 
+ ~/projects/Coral/pycoral $ pip --version
+     pip 22.0.4 from /home/wlabagnara/.pyenv/versions/3.9.16/lib/python3.9/site-packages/pip (python 3.9)  
+	 
+# contine from the this folder with the correct 'local pyenv environment' for the remaining steps...
+
+
+*******
+
+
+# Continuing at 'Step 2: Install the PyCoral library' on Coral website:
+
+  sudo apt-get install python3-pycoral (does NOT work!)
+	
+  OR, 
+  
+  python3 -m pip install --extra-index-url https://google-coral.github.io/py-repo/ pycoral~=2.0 (from 'within' your pyenv/venv... think it should work?)
+	
+  OR, 
+  
+  pip install --extra-index-url https://google-coral.github.io/py-repo/ pycoral~=2.0 (from 'within' your pyenv/venv... WORKS!)
+  
+
+*******
+
+
+# Continuing at 'Step 3: Run a model on the Edge TPU' on Coral USB accelerator site:
+
+# Now install Coral examples from GitHub: (github.com/google-coral/pycoral/tree/master/examples)
+	
+# Clone Coral USB repo examples:
+
+   git clone https://github.com/google-coral/pycoral.git
+   cd pycoral
+ 
+   pip install "numpy<2"
+   cd projects/Coral/pycoral
+     
+   bash examples/install_requirements.sh classify_image.py  (above command will give error, if you didn't do this command, then '~Coral/pycoral/test_data folder was empty')
+   
+# Connect Coral USB accelerator:  
+	Here is where I learned my new Coral USB was broken - no indication of power or enumeration on Pi or PC!... replaced Coral USB with new one... it has light on!...
+		and the below examples now work!...  :-)
+
+  lsusb
+  reboot
+  lsusb   
+	(should see "1a6e:089a Global Unichip Corp." is detected - really? should it be google device?... 
+		YES, lsusb now shows "ID 18d1:9302 Google Inc." after running examples!)
+
+  cd projects/Coral/pycoral
+  python3 examples/classify_image.py \
+   --model test_data/mobilenet_v2_1.0_224_inat_bird_quant_edgetpu.tflite \
+   --labels test_data/inat_bird_labels.txt \
+   --input test_data/parrot.jpg
+
+  (Should see inference output and results from Edge TPU model run!)
+  
+# Download all/more examples:
+
+  bash examples/install_requirements.sh
+  (bunch more files will be downloaded into the 'test_data' folder)
+
+# Can now run another example for the bird input:
+  
+  python3 examples/classify_image.py \
+   --model test_data/mobilenet_v2_1.0_224_inat_bird_quant_edgetpu.tflite \
+   --labels test_data/inat_bird_labels.txt \
+   --input test_data/bird.bmp
+   
+  (Should see inference output and results from Edge TPU model run!)
+
+# Can now run examples with live video from the camera.....
+
+  ** TBD **
+  
+******* 
+
+# can unset your env
+  pyenv [local | shell | global] --unset  (unset it)
+
+# can remove pyenv	
+  rm -fr ~/.pyenv (to uninstall pyenv, then go and remove lines added to .bashrc file)  
+  
+	
+********************

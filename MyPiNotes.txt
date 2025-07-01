@@ -1,0 +1,45 @@
+
+Pi5 command line useful commands:
+
+~ $ lsb_release -a
+~ $ hostnamectl
+~ $ cat /etc/os-release
+~ $ uname -a
+~ $ cat /proc/version
+~ $ getconf LONG_BIT  (returns bitsize of the kernel)
+~ $ lscpu  (architecture, endianess and more)
+~ $ watch -n .5 cat /sys/devices/platform/cooling_fan/hwmon/hwmon2/fan1_input (watch fan speed)
+~ $ lspci  (lists pci devices)
+~ $ lsusb [-t] (list usb devices)
+~ $ lsblk  (block devices, like media drives/ssd)
+~ $ watch vcgencmd pmic_read_adc (watch power monitor)
+~ $ watch vcgencmd measure_clock arm (watch clocking)
+~ $ watch [-n .5] vcgencmd measure_temp (watch temp)
+~ $ iperf3 [--reverse] -c 192.168.0.199 (packet performance - need to install?)
+~ $ cat /sys/class/ptp/ptp0/clock_name (precision time protocol) 
+~ $   ethtool -T [eth0 | wlan0]
+~ $ sudo hdparm -t --direct /dev/mmcblk0 (disk drive performance - need to install?)
+~ $ sysbench cpu --cpu-max-prime=20000 --threads=4 --time=0 --events=10000 run (perf and power checks - install?)
+~ $ free[-h], or top, or htop (check ram size and usage)
+ 
+# camera:
+~ $ rpicam-hello		      (test your camera connection)
+~ $ rpicam-hello -t 100sec	      (test your camera with timeout)
+~ $ rpicam-still -o Desktop/image.jpg (take a picture and save to file)
+~ $ rpicam-vid -o Desktop/video.mp4   (make a video and save to file)
+
+# best practice update:
+~ $ sudo apt update
+~ $ sudo apt upgrade -y
+
+benchmarking your Pi:
+
+In chromium browser: type ...
+  'chrome://gpu/'
+  'webglsamples.org/aquarium/aquarium.html
+
+https://www.geekbench.com/ install/buy to run perf/benchmarks?
+
+
+
+

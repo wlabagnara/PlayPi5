@@ -1,0 +1,279 @@
+
+*************************************************************
+# * pyenv - python environment
+*************************************************************
+
+realpython: https://realpython.com/account/join/
+
+ref: https://realpython.com/videos/start-with-pyenv-overview/,
+	 https://realpython.com/intro-to-pyenv/#installing-pyenv,
+	 github.com/pyenv/pyenv-installer,
+	 https://github.com/pyenv/pyenv#installation
+	 https://github.com/pyenv/pyenv?tab=readme-ov-file#installation
+	 
+	 
+* If Ubuntu/Debian OS ... need these packages...
+
+$ sudo apt-get install -y make build-essential libssl-dev zlib1g-dev \
+libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev \
+libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl
+
+* pyenv-installer
+
+$ curl https://pyenv.run | bash
+
+Note: This will install pyenv along with a few plugins that are useful:
+
+	pyenv: The actual pyenv application
+	pyenv-virtualenv: Plugin for pyenv and virtual environments
+	pyenv-update: Plugin for updating pyenv
+	pyenv-doctor: Plugin to verify that pyenv and build dependencies are installed
+	pyenv-which-ext: Plugin to automatically lookup system commands
+
+
+* Assuming 'bash' shell ... but ultimately based on your shell 
+
+	WARNING: seems you still have not added 'pyenv' to the load path.
+
+	Load pyenv automatically by adding
+	the following to ~/.bashrc:
+
+	export PATH="$HOME/.pyenv/bin:$PATH"
+	eval "$(pyenv init -)"
+	eval "$(pyenv virtualenv-init -)"
+
+* To restart your terminal after shell edits...
+
+$ exec "$SHELL" # Or just restart your terminal
+
+That's it. You now have pyenv and four useful plugins installed!
+
+* Using pyenv to install python...
+
+* seeing all...
+$ pyenv install --list
+...
+# There are a lot
+
+* Or, Filtering your list with grep...
+
+$ pyenv install --list | grep " 3\.[678]"
+  3.6.0
+  3.6-dev
+  3.6.1
+  3.6.2
+  3.6.3
+  3.6.4
+  3.6.5
+  3.6.6
+  3.6.7
+  3.6.8
+  3.7.0
+  3.7-dev
+  3.7.1
+  3.7.2
+  3.8-dev
+  
+ $ pyenv install --list | grep "jython"
+  jython-dev
+  jython-2.5.0
+  jython-2.5-dev
+  jython-2.5.1
+  jython-2.5.2
+  jython-2.5.3
+  jython-2.5.4-rc1
+  jython-2.7.0
+  jython-2.7.1
+  
+ * Say, we want 3.7.2 installed (-v option is verbose, not version)
+ 
+$ pyenv install [-v] 3.7.2
+	/tmp/python-build.20190208022403.30568 ~
+	Downloading Python-3.7.2.tar.xz...
+	-> https://www.python.org/ftp/python/3.7.2/Python-3.7.2.tar.xz
+	Installing Python-3.7.2...
+	/tmp/python-build.20190208022403.30568/Python-3.7.2 /tmp/python-build.20190208022403.30568 ~
+	[...]
+	Installing collected packages: setuptools, pip
+	Successfully installed pip-18.1 setuptools-40.6.2
+	Installed Python-3.7.2 to /home/realpython/.pyenv/versions/3.7.2
+  
+* Check install location(s):
+
+$ ls ~/.pyenv/versions/
+2.7.15  3.6.8  3.8-dev
+
+* Removing a version:
+
+$ rm -rf ~/.pyenv/versions/2.7.15
+
+OR
+
+$ pyenv uninstall 2.7.15  (using pyenv)
+
+
+* Using your new python:
+  The * indicates that the system Python version is active currently. 
+  You'll also notice that this is set by a file in your root pyenv directory. 
+  This means that, by default, you are still using your system Python:
+
+$ pyenv versions
+* system (set by /home/realpython/.pyenv/version)
+  2.7.15
+  3.6.8
+  3.8-dev
+
+$ python -V
+Python 2.7.12
+
+$ which python
+/home/realpython/.pyenv/shims/python
+
+$ pyenv which python
+/usr/bin/python
+
+If, for example, you wanted to use version 2.7.15, then you can use the global command:
+
+$ pyenv global 2.7.15
+$ python -V
+Python 2.7.15
+
+$ pyenv versions
+  system
+* 2.7.15 (set by /home/realpython/.pyenv/version)
+  3.6.8
+  3.8-dev
+  
+Pro Tip: A great way to get peace of mind that the version of Python you just installed is working properly is to run the built-in test suite:
+This will kick off lots of internal Python tests that will verify your installation. You can just kick back and watch the tests pass.
+
+$ pyenv global 3.8-dev
+$ python -m test
+
+* To go back to the system version of Python as the default, you can run this:
+
+$ pyenv global system
+$ python -V
+Python 2.7.12
+
+* pyenv commands.. (Each command has a --help flag)
+
+$ pyenv commands
+activate
+commands
+completions
+deactivate
+...
+virtualenvs
+whence
+which
+
+$ pyenv shims --help
+Usage: pyenv shims [--short]
+
+List existing pyenv shims
+
+* Install
+
+$ pyenv install 3.6.8
+
+	The output shows us pyenv downloading and installing Python. Some of the common flags you may want to use are the following:
+
+	Flag	Description
+	-l/--list	Lists all available Python versions for installation
+	-g/--debug	Builds a debug version of Python
+	-v/--verbose	Verbose mode: print compilation status to stdout
+
+$ pyenv local 2.7.15
+
+	This command creates a .python-version file in your current directory.
+
+
+$ pyenv shell 3.8-dev
+
+	This command activates the version specified by setting the PYENV_VERSION environment variable. 
+	This command overwrites any applications or global settings you may have. 
+	If you want to deactivate the version, you can use the --unset flag.
+
+
+* pyenv-virtualenv
+
+$ pyenv virtualenv <python_version> <environment_name>
+$ pyenv virtualenv 3.6.8 myproject
+$ pyenv local myproject
+$ pyenv which python
+/home/realpython/.pyenv/versions/myproject/bin/python
+$ pyenv which pip
+/home/realpython/.pyenv/versions/myproject/bin/pip
+
+If you did not configure eval "$(pyenv virtualenv-init -)" to run in your shell, 
+  you can manually activate/deactivate your Python versions with this:
+  In otherwords, if you did configure eval "$(pyenv virtualenv-init -)"... 
+  then you the activate/deactivate will happen automagically! And you will not have to do these steps...
+$ pyenv activate <environment_name>
+$ pyenv deactivate
+The above is what pyenv-virtualenv is doing when it enters or exits a directory with a .python-version file in it.
+
+*** Working With Multiple Environments ***
+
+$ pyenv versions
+* system (set by /home/realpython/.pyenv/version)
+  2.7.15
+  3.6.8
+  3.8-dev
+  
+  project1 supports Python 2.7 and 3.6.
+  project2 supports Python 3.6 and experiments with 3.8-dev.
+  
+$ cd project1/
+$ pyenv which python
+/usr/bin/python
+$ pyenv virtualenv 3.6.8 project1
+...
+$ pyenv local project1
+$ python -V
+/home/realpython/.pyenv/versions/project1/bin/python
+
+$ cd $HOME
+$ pyenv which python
+/usr/bin/python
+
+$ cd project2/
+$ pyenv which python
+/usr/bin/python
+$ pyenv virtualenv 3.8-dev project2
+...
+$ pyenv local 3.8-dev
+$ pyenv which python
+/home/realpython/.pyenv/versions/3.8-dev/bin/python
+
+$ cd project2/
+$ python -V
+Python 3.8.0a0
+$ cd ../project1
+$ python -V
+Python 3.6.8
+
+******
+
+Optional 'Bonus' material:
+
+No more remembering to activate environments: you can switch between all your projects, 
+and pyenv will take care of automatically activating the correct Python versions 
+and the correct virtual environments.
+
+Bonus: Displaying Your Environment Name in Your Command Prompt
+If you’re like me and constantly switching between various virtual environments and 
+Python versions, it’s easy to get confused about which version is currently active. 
+I use oh-my-zsh and the agnoster theme, 
+	https://github.com/ohmyzsh/ohmyzsh
+	https://github.com/agnoster/agnoster-zsh-theme
+	https://gist.github.com/loganasherjones/bd9b7614f80b96cf700fd60e9e256f41
+
+which by default makes my prompt look like this:
+
+	project1-venv > me@me-dev > ~/workspace/project1 >
+	
+
+********************
+
